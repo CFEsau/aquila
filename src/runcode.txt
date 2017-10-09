@@ -1,0 +1,5 @@
+rm ./findlambda.out
+
+gfortran -o findlambda.out modules.f90 lambda.f90 mst.f90 heapsort.f90 aquila_mst.f90
+
+./findlambda.out
