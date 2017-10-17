@@ -4,24 +4,16 @@
 !
 !******************************************************************************!
 
-MODULE starparams_module
-  ! RA & dec (decimal)
+MODULE directories_module
+  character(len=100) :: paramdir  ! Destination directory (e.g. 'outputs/m')
+  character(len=100) :: lampath, CDFpath
+  !RA & dec in decimal format
   double precision, dimension(:), allocatable :: RA, dec
-  ! rcore & robs: deconvolved & observed radius
-  double precision, dimension(:), allocatable :: rcore, robs
-  ! mass, m uncertainty, dust temprature, t uncertainty
-  double precision, dimension(:), allocatable :: m, merr, T, Terr
-  ! peak & average column densities
-  double precision, dimension(:), allocatable :: ncolPeak, ncolCore, ncolObs
-  ! peak & average volume densities
-  double precision, dimension(:), allocatable :: nvolPeak, nvolCore, nvolObs
-  double precision, dimension(:), allocatable :: mBE      ! Bonnor-Ebert mass
-  CHARACTER(len=50) :: outdir  ! Destination directory (e.g. 'outputs')
-  
-END MODULE starparams_module
+END MODULE directories_module
+
 
 MODULE lambdaparams_module
-
+  
   integer :: nmst            ! number of stars in MST
   INTEGER :: nloop         ! number of random MSTs calculated in loop
   
@@ -76,11 +68,4 @@ MODULE lambdaparams_module
   LOGICAL :: findlam, findlambar, findlamrms, findlamsmr, findlamhar
   LOGICAL :: findlamtil, findlamNmed, findlamstar, findgam, findlamln
   
-
-!===============
-! Outputs
-!===============
-!
-  integer :: cdfobjunit, cdfranunit
-
 END MODULE lambdaparams_module

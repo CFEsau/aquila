@@ -2,7 +2,7 @@
 !(debug flags: https://stackoverflow.com/questions/29823099/debugging-with-gdb-and-gfortran-fpes)
 
 program aquila_mst
-  use starparams_module
+  use directories_module
   implicit none
 
   character (len=30) :: infile(3)       ! input file name for each cluster type
@@ -11,17 +11,27 @@ program aquila_mst
   character (len=12) :: coretype,sample ! prestellar/starless/protostellar
   integer :: ncores
   logical :: usecores(3)      ! core types to be used in lambda calculations
-  integer :: i,j,p            ! generic counters
+  double precision, dimension(:), allocatable :: rcore, robs
+  double precision, dimension(:), allocatable :: m, merr, T, Terr
+  double precision, dimension(:), allocatable :: ncolPeak, ncolCore, ncolObs
+  double precision, dimension(:), allocatable :: nvolPeak, nvolCore, nvolObs
+  double precision, dimension(:), allocatable :: mBE
+  ! deconvolved radius, observed radius,
+  ! mass, m uncertainty, dust temperature, t uncertainty,
+  ! peak & average column densities,
+  ! peak & average volume densities,
+  ! Bonnor-Ebert mass
+  integer :: i,j              ! generic counters
   character(len=20) :: cdum   ! read un-needed strings
   integer :: io               ! for iostat specifier (end of file)
+  character(len=50) :: outdir
   LOGICAL :: dirExists        ! does given directory exist?
 
   infile(1)='../data/starless.dat'
   infile(2)='../data/prestellar.dat'
   infile(3)='../data/protostellar.dat'
 
-  sample="all" ! Currently all, starless, prestellar, or custom
-  
+  sample="starless" ! Currently all, starless, prestellar, or custom
   !If 'starless', use starless & prestellar.
   !If 'prestellar', just use prestellar
   
@@ -53,25 +63,18 @@ program aquila_mst
   end if
   
   
-  j=0
+  ncores=0
   do i=1,3
-     if(usecores(i)) then       ! If we want this core, open file
-        open(i,file=trim(infile(i)),status='old')
-        !count number of cores to allocate arrays:
-        do
-           read(i,*,iostat=io) cdum
-           if (io < 0) goto 100
-           if (len_trim(cdum)==0) then
-              cycle
-           else
-              j=j+1  !Successful read: increment j
-           end if
-        end do
-100     rewind(i)
+     if(usecores(i)) then       ! If we want this core, open end of file
+        open(unit=i,file=trim(infile(i)),status='old',position='append')
+        backspace(i) !backspace to beginning of last line in file
+        read(i,*) j
+        rewind(i) !rewind to beginning of file for read-in below
+        ncores=ncores+j !add number of cores in this file to total number
      end if
   end do
-  ncores=j
-
+  
+  
   allocate(RA(1:ncores))
   allocate(dec(1:ncores))
   allocate(rcore(1:ncores))
@@ -104,34 +107,136 @@ program aquila_mst
 200     close(i)
      end if
   end do
-
-  ! Want to know if any stars have equal masses - that will mess up ordering.
-  ! To avoid any biases in the catalogue, add a small random number to the mass
-  ! of stars with equal masses so that any sorting bias in the catalogue is
-  ! erased and the stars are sorted reliably.
-  do
-     p = 0
-     do j = 1, ncores - 1
-        do i = j+1, ncores
-           !if (m(i) == m(j)) then
-           if (T(i) == T(j)) then
-              p=p+1
-              !write(6,*) "Two masses equal", j, i, m(j), m(i), p
-              !m(i) = m(i) + rand(0)*10.e-5
-              !write(6,*) "Shouldn't be now...", j, i, m(j), m(i)
-              !write(6,*) "Two temperatures equal", j, i, T(j), T(i), p
-              T(i) = T(i) + rand(0)*10.e-5
-              !write(6,*) "Shouldn't be now...", j, i, T(j), T(i)
-              !write (6,*) ""
-           end if
-        end do
-     end do
-     if (p==0) exit
-  end do
   
-  !rcore, robs, m, T, ncolPeak, ncolCore, ncolObs,
-  !nvolPeak, nvolCore, nvolObs, or mBE as input
+  
+
+  paramdir = trim(outdir)//'/mass'
+  !create output directory
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,m)
+  !and find lambda:
+  call lambda_setup(ncores,m)
+
+  
+  !=========================
+  ! Do for all other params
+  !=========================
+  
+
+  !create directory for 'parameter':
+  paramdir = trim(outdir)//'/rcore'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,rcore)
+  !and find lambda for this parameter:
+  call lambda_setup(ncores,rcore)
+
+  
+  paramdir = trim(outdir)//'/robs'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,robs)
+  !and find lambda for this parameter:
+  call lambda_setup(ncores,robs)
+
+ 
+  paramdir = trim(outdir)//'/T'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,T)
+  !and find lambda for this parameter:
   call lambda_setup(ncores,T)
+
+  
+  print*,ncores,maxval(ncolPeak)
+  paramdir = trim(outdir)//'/ncolPeak'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,ncolPeak)
+  !and find lambda for this parameter:
+  call lambda_setup(ncores,ncolPeak)
+  
+  
+  paramdir = trim(outdir)//'/ncolCore'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,ncolCore)
+  !and find lambda for this parameter:
+  call lambda_setup(ncores,ncolCore)
+
+  
+  paramdir = trim(outdir)//'/ncolObs'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,ncolObs)
+  !and find lambda for this parameter:
+  call lambda_setup(ncores,ncolObs)
+
+  
+  paramdir = trim(outdir)//'/nvolPeak'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,nvolPeak)
+  !and find lambda for this parameter:
+  call lambda_setup(ncores,nvolPeak)
+
+  
+  paramdir = trim(outdir)//'/nvolCore'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,nvolCore)
+  !and find lambda for this parameter:
+  call lambda_setup(ncores,nvolCore)
+
+  
+  paramdir = trim(outdir)//'/nvolObs'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,nvolObs)
+  !and find lambda for this parameter:
+  call lambda_setup(ncores,nvolObs)
+
+  
+  paramdir = trim(outdir)//'/mBE'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  !see whether two masses are equal. If so, shift one
+  call shift(ncores,mBE)
+  !and find lambda for this parameter:
+  call lambda_setup(ncores,mBE)
 
   deallocate(RA)
   deallocate(dec)
@@ -148,3 +253,36 @@ program aquila_mst
   deallocate(mBE)
 
 end program aquila_mst
+
+
+
+
+
+subroutine shift(ncores,param)
+
+  implicit none
+  integer, intent(in) :: ncores
+  double precision, intent(inout) :: param(1:ncores)
+  integer :: i,j,p
+
+  
+  ! Want to know if any stars have equal masses - that will mess up ordering.
+  ! To avoid any biases in the catalogue, add a small random number to the mass
+  ! of stars with equal masses so that any sorting bias in the catalogue is
+  ! erased and the stars are sorted reliably.
+  do
+     p = 0
+     do j = 1, ncores - 1
+        do i = j+1, ncores
+           if (param(i) == param(j)) then
+              p=p+1
+              !write(6,*) "Two values equal", j, i, param(j), param(i), p
+              param(i) = param(i) + rand(0)*10.e-5
+              !write(6,*) "Shouldn't be now...", j, i, param(j), param(i)
+           end if
+        end do
+     end do
+     if (p==0) exit
+  end do
+  
+end subroutine shift
