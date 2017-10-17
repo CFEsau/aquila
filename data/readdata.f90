@@ -48,13 +48,13 @@ program readdata
   write(6,*) ""
   write(6,*) "Input file: ",infile
   write(6,*) ""
-  ignore='CO high-V_LSR'
-  
+  ignore='CO high-V_LSR'  !ignore any objects that have this comment
+
+  !skip header info
   open(1,file=infile,status='old')
   read(1,*)char
   do while (char=='|')
      read(1,*)char
-     !print *, char
   end do
   
   backspace(1)
@@ -71,18 +71,22 @@ program readdata
   
   do
      n_all=n_all+1
-     read (1,'(a)',end=100) wholeline
+     read (1,'(a)',end=100) wholeline  ! read line from file
+     
+     ! Check whether object has 'ignore' string in & cycle if so
      call hasstring(ignore,wholeline,commentInLine)
      if (commentInLine) then
         nskip=nskip+1
         !write (6,*) "SKIPPING ", corenum
-        !print *, wholeline
-        cycle ! go to next iteration
+        cycle ! go to next iteration of 'do'
      end if
+     
      backspace(1)      ! Go back to previous line
      read (1,*) corenum, corename, RAstr, decstr, rcore, robs, &
           & mcore, merr, Tdust, Terr, ncolPeak, ncolCore, ncolObs, &
           &  nvolPeak, nvolCore, nvolObs, mBE, coretype
+
+     ! Find core type for output file direction
      if (coretype=='starless') then
         nstarless=nstarless+1
         ofile=10
@@ -102,10 +106,10 @@ program readdata
      write(ofile,20) corei, corenum, corename, RAdeg, decdeg, rcore, robs, &
              & mcore, merr, Tdust, Terr, ncolPeak, ncolCore, ncolObs, &
              & nvolPeak, nvolCore, nvolObs, mBE, coretype
-     
   end do
+  
+  ! Character formatting: ID, ncore, name, RA, dec, rc, ro
 20 format(2(2X,I4),2X,A,2(2X,F9.5),2(2X,(1P E7.2E1)) &
-        !ID, ncore, name, RA, dec, rc, ro ^
         & 0P, 2X,F6.2,2X,F5.2,2X,F4.1,2X,F3.1, & !Mc, Merr, T, Terr
         & 6(2X,F5.1),2X,F4.1,2X,A) !N, Nc, No, n, nc, no, mBE, type
  

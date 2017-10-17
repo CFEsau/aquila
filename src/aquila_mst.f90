@@ -20,11 +20,23 @@ program aquila_mst
   infile(2)='../data/prestellar.dat'
   infile(3)='../data/protostellar.dat'
 
-  sample="all" ! Currently all, starless, or prestellar.
+  sample="all" ! Currently all, starless, prestellar, or custom
   
-  !for starless use starless & prestellar. For prestellar just use 'prestellar'
-  !Also set up directory for outputs.
-  if (trim(sample)=='all') then
+  !If 'starless', use starless & prestellar.
+  !If 'prestellar', just use prestellar
+  
+  !Set up output directory
+  outdir = '../cores_'//trim(sample)
+  INQUIRE(file = outdir, exist = dirExists)
+   IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(outdir))
+  END IF
+  
+  if (trim(sample)=='custom') then
+     usecores(1)=.FALSE.  ! starless
+     usecores(2)=.FALSE.  ! prestellar
+     usecores(3)=.FALSE.  ! protostellar
+  else if (trim(sample)=='all') then
      usecores(1)=.TRUE.   ! starless
      usecores(2)=.TRUE.   ! prestellar
      usecores(3)=.TRUE.   ! protostellar
@@ -40,12 +52,6 @@ program aquila_mst
      write(6,*) "Core type not recognised."; stop
   end if
   
-  ! create directory for lambda data:
-  outdir = '../cores_test'//trim(sample)
-  INQUIRE(file = outdir, exist = dirExists)
-   IF (.NOT. dirExists) THEN
-     CALL system('mkdir -p '//trim(outdir))
-  END IF
   
   j=0
   do i=1,3
@@ -107,11 +113,15 @@ program aquila_mst
      p = 0
      do j = 1, ncores - 1
         do i = j+1, ncores
-           if (m(i) == m(j)) then
+           !if (m(i) == m(j)) then
+           if (T(i) == T(j)) then
               p=p+1
               !write(6,*) "Two masses equal", j, i, m(j), m(i), p
-              m(i) = m(i) + rand(0)*10.e-5
+              !m(i) = m(i) + rand(0)*10.e-5
               !write(6,*) "Shouldn't be now...", j, i, m(j), m(i)
+              !write(6,*) "Two temperatures equal", j, i, T(j), T(i), p
+              T(i) = T(i) + rand(0)*10.e-5
+              !write(6,*) "Shouldn't be now...", j, i, T(j), T(i)
               !write (6,*) ""
            end if
         end do
@@ -121,7 +131,7 @@ program aquila_mst
   
   !rcore, robs, m, T, ncolPeak, ncolCore, ncolObs,
   !nvolPeak, nvolCore, nvolObs, or mBE as input
-  call lambda_setup(ncores,m)
+  call lambda_setup(ncores,T)
 
   deallocate(RA)
   deallocate(dec)

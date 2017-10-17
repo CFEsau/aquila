@@ -16,7 +16,7 @@ MODULE starparams_module
   ! peak & average volume densities
   double precision, dimension(:), allocatable :: nvolPeak, nvolCore, nvolObs
   double precision, dimension(:), allocatable :: mBE      ! Bonnor-Ebert mass
-  CHARACTER(len=18) :: outdir  ! Destination directory (e.g. 'outputs')
+  CHARACTER(len=50) :: outdir  ! Destination directory (e.g. 'outputs')
   
 END MODULE starparams_module
 

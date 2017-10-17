@@ -530,7 +530,7 @@ SUBROUTINE find_lambda(ncores,param,lampath)
 !      Find the MST length for the OBJECT stars
 !*****************************************************
 !          *********************************
-
+  
   edgeL = 0.
   
   CALL mst(nmst,mst_RA,mst_dec,z,edgeL,connections)

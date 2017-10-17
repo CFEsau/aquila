@@ -3,32 +3,24 @@ Aquila study
 Data from http://gouldbelt-herschel.cea.fr/archives
 File HGBS_aquilaM2_derived_core_catalog.txt
 
-Mass segregation checks: starless (unbound+bound)  vs  prestellar (bound) subsamples.
+Mass segregation checks:
+starless (unbound+bound)  vs  prestellar (bound) subsamples.
 
 From Vera:
-To get the STARLESS cores for the tests you may choose the "starless" AND "prestellar"
-cores together based on their Core_type (col. 18), excluding the ones with "CO high-V_LSR"
-comments (col. 19). This should give 651 unbound/bound starless cores.
+To get the STARLESS cores for the tests choose the "starless" AND "prestellar"
+cores together based on their Core_type (col. 18), excluding ones with "CO high-V_LSR" comments (col. 19). This should give 651 unbound/bound starless cores.
 
-For the PRESTELLAR cores, please use the subsample of "prestellar" cores (Core_type, col.
-18), excluding the "CO high-V_LSR" commented ones (col. 19), I think there's 446 of them.
+For the PRESTELLAR cores, use the subsample of "prestellar" cores (Core_type, col. 18), excluding the "CO high-V_LSR" commented ones (col. 19; there are 446 of them).
 
-Again, what I could see with Allison+2009's Lambda_MST script, is that among the starless
-sample there is positive mass segregation for the highest mass (N=10-20-50) cores, AND also
-for the smallest mass cores, while these latters are not part of the bound prestellar sample,
-so there only the highest-mass bins had >0 Lambda_MST.
+What I could see with Allison+2009's Lambda_MST script is that among the starless sample there is positive mass segregation for the highest mass (N=10-20-50) cores, AND also for the smallest mass cores, while these latters are not part of the bound prestellar sample, so there only the highest-mass bins had >0 Lambda_MST.
 
-This all shows up for the whole field, but maybe even more significantly for the central W40 -
-Sepens South filaments region. I presented both the part vs whole in my talk. In order to get a
-subsample only around W40 - Sepens S, I basically selected the cores in that part of the map
-above an A_V (visual extinction) of ~ 7 mag from the corresponding column density map (also
-available in the same line of the archive: HGBS_aquilaM2_column_density_map.fits.gz).
+This all shows up for the whole field, but maybe even more significantly for the central W40 - Sepens South filaments region. I presented both the part vs whole in my talk. In order to get a subsample only around W40 - Sepens S, I basically selected the cores in that part of the map above an A_V (visual extinction) of ~ 7 mag from the corresponding column density map (also available in the same line of the archive: HGBS_aquilaM2_column_density_map.fits.gz).
 
 -------------------------------------------------------------
 
 'data' directory:
 
-Data file read in and written to alternative files using readdata.f90
+readdata.f90: read in data and write to alternative files
 
 Columns in prestellar.dat and starless.dat:
 ID    core#    corename    RA(deg)    dec(deg)    Rdeconvolved    Robs
@@ -36,6 +28,7 @@ mass    merr    Tdust    Terr    npeak(cm^-2)    n(cm^-2)    nobs(cm^-2)
 Npeak(cm^-3)    N(cm^-3)    Nobs(cm^-3)    M_BE    coretype
 
 Outputs:
+protostellar.dat
 prestellar.dat
 starless.dat
 
@@ -48,8 +41,8 @@ runcode.txt: compile code/modules/subroutines & run findlambda
 aquila_mst.f90
 Input file: .dat files from 'data'
 - Set which core types are required (starless, prestellar, protostellar)
-- Cycle through core type files and count objects to allocate arrays
-- Allocate variables desired for MSTs
+- Cycle through core type files & find objects in each to allocate arrays
+- Allocate variables required for MSTs
 - Cycle through core type files again reading in data
 - Call lambda_setup to allocate, zero, and deallocate arrays used in lambda calculations
 
@@ -69,7 +62,16 @@ Input file: .dat files from 'data'
   - Deallocate lambda arrays
 
     find_lambda:
-    - 
+    - sort stars in order of descending 'parameter' (e.g. mass)
+    - write positions of these stars to objpositions.dat
+    - calculate 'object' mst
+    - write positions of MST edges
+    - heapsort MST edge lengths for CDF
+    - write out ordered list of edge lengths (obj mst)
+    - find object MST stats (e.g. total MST length, median edge length)
+    - do random MSTs, outputting ordered list of random MST
+      edge lengths for nCDF stars
+    - calculate lambda using object & random MSTs
 
 
 Summary of outputs:
