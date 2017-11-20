@@ -4,13 +4,22 @@
 !
 !******************************************************************************!
 
-MODULE directories_module
-  character(len=100) :: paramdir  ! Destination directory (e.g. 'outputs/m')
-  character(len=100) :: lampath, CDFpath
-  !RA & dec in decimal format
+MODULE starparams_module
+  
+  ! RA & dec (decimal)
   double precision, dimension(:), allocatable :: RA, dec
-END MODULE directories_module
-
+  ! rcore & robs: deconvolved & observed radius
+  double precision, dimension(:), allocatable :: rcore, robs
+  ! mass, m uncertainty, dust temprature, t uncertainty
+  double precision, dimension(:), allocatable :: m, merr, T, Terr
+  ! peak & average column densities
+  double precision, dimension(:), allocatable :: ncolPeak, ncolCore, ncolObs
+  ! peak & average volume densities
+  double precision, dimension(:), allocatable :: nvolPeak, nvolCore, nvolObs
+  double precision, dimension(:), allocatable :: mBE      ! Bonnor-Ebert mass
+  CHARACTER(len=20) :: outdir  ! Destination directory (e.g. 'outputs')
+  
+END MODULE starparams_module
 
 MODULE lambdaparams_module
   

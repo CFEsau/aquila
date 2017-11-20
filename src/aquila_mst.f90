@@ -2,7 +2,7 @@
 !(debug flags: https://stackoverflow.com/questions/29823099/debugging-with-gdb-and-gfortran-fpes)
 
 program aquila_mst
-  use directories_module
+  use starparams_module
   implicit none
 
   character (len=30) :: infile(3)       ! input file name for each cluster type
@@ -11,20 +11,9 @@ program aquila_mst
   character (len=12) :: coretype,sample ! prestellar/starless/protostellar
   integer :: ncores
   logical :: usecores(3)      ! core types to be used in lambda calculations
-  double precision, dimension(:), allocatable :: rcore, robs
-  double precision, dimension(:), allocatable :: m, merr, T, Terr
-  double precision, dimension(:), allocatable :: ncolPeak, ncolCore, ncolObs
-  double precision, dimension(:), allocatable :: nvolPeak, nvolCore, nvolObs
-  double precision, dimension(:), allocatable :: mBE
-  ! deconvolved radius, observed radius,
-  ! mass, m uncertainty, dust temperature, t uncertainty,
-  ! peak & average column densities,
-  ! peak & average volume densities,
-  ! Bonnor-Ebert mass
-  integer :: i,j              ! generic counters
-  character(len=20) :: cdum   ! read un-needed strings
+  integer :: i,j,p            ! generic counters
+  character(len=20) :: cdum   ! read non-needed strings
   integer :: io               ! for iostat specifier (end of file)
-  character(len=50) :: outdir
   LOGICAL :: dirExists        ! does given directory exist?
 
   infile(1)='../data/starless.dat'
@@ -32,16 +21,16 @@ program aquila_mst
   infile(3)='../data/protostellar.dat'
 
   sample="starless" ! Currently all, starless, prestellar, or custom
-  !If 'starless', use starless & prestellar.
-  !If 'prestellar', just use prestellar
   
-  !Set up output directory
+  ! create directory for lambda data:
   outdir = '../cores_'//trim(sample)
   INQUIRE(file = outdir, exist = dirExists)
    IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(outdir))
   END IF
   
+  !for starless use starless & prestellar. For prestellar just use 'prestellar'
+  !Also set up directory for outputs.
   if (trim(sample)=='custom') then
      usecores(1)=.FALSE.  ! starless
      usecores(2)=.FALSE.  ! prestellar
@@ -101,10 +90,10 @@ program aquila_mst
                 & rcore(j), robs(j), m(j), merr(j), T(j), Terr(j), &
                 & ncolPeak(j), ncolCore(j), ncolObs(j), &
                 & nvolPeak(j), nvolCore(j), nvolObs(j), mBE(j), coretype
-           if (io < 0) goto 200
+           if (io < 0) goto 100
            j=j+1  ! Successful read: increment j
         end do
-200     close(i)
+100     close(i)
      end if
   end do
   
@@ -118,24 +107,19 @@ program aquila_mst
   END IF
   !see whether two masses are equal. If so, shift one
   call shift(ncores,m)
-  !and find lambda:
+  !and find lambda
   call lambda_setup(ncores,m)
 
   
-  !=========================
-  ! Do for all other params
-  !=========================
+  ! And do for all other paramaters:
   
-
-  !create directory for 'parameter':
+  !create directory for parameter
   paramdir = trim(outdir)//'/rcore'
   INQUIRE(file = trim(paramdir), exist = dirExists)
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,rcore)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,rcore)
 
   
@@ -144,9 +128,7 @@ program aquila_mst
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,robs)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,robs)
 
  
@@ -155,9 +137,7 @@ program aquila_mst
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,T)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,T)
 
   
@@ -167,9 +147,7 @@ program aquila_mst
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,ncolPeak)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,ncolPeak)
   
   
@@ -178,9 +156,7 @@ program aquila_mst
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,ncolCore)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,ncolCore)
 
   
@@ -189,9 +165,7 @@ program aquila_mst
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,ncolObs)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,ncolObs)
 
   
@@ -200,9 +174,7 @@ program aquila_mst
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,nvolPeak)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,nvolPeak)
 
   
@@ -211,9 +183,7 @@ program aquila_mst
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,nvolCore)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,nvolCore)
 
   
@@ -222,9 +192,7 @@ program aquila_mst
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,nvolObs)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,nvolObs)
 
   
@@ -233,11 +201,10 @@ program aquila_mst
   IF (.NOT. dirExists) THEN
      CALL system('mkdir -p '//trim(paramdir))
   END IF
-  !see whether two masses are equal. If so, shift one
   call shift(ncores,mBE)
-  !and find lambda for this parameter:
   call lambda_setup(ncores,mBE)
-
+  
+  
   deallocate(RA)
   deallocate(dec)
   deallocate(rcore)
