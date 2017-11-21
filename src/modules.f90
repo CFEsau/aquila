@@ -78,3 +78,11 @@ MODULE lambdaparams_module
   LOGICAL :: findlamtil, findlamNmed, findlamstar, findgam, findlamln
   
 END MODULE lambdaparams_module
+
+MODULE directories_module
+  
+  character(len=100) :: paramdir  ! Destination directory (e.g. 'outputs/m')
+  character(len=100) :: lampath   ! Directory for lambda data
+  character(len=100) :: CDFpath   ! Directory for CDF data
+  
+END MODULE directories_module

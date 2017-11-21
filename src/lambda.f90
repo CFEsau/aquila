@@ -4,6 +4,8 @@ subroutine lambda_setup(ncores,param)
 
   use lambdaparams_module
   use starparams_module
+  use directories_module
+  
   implicit none
   
   integer, intent(in) :: ncores
@@ -13,8 +15,6 @@ subroutine lambda_setup(ncores,param)
   integer :: nlam        ! number of lambda types
   integer :: lamunit     ! output unit
   character(len=5) :: Nmedstr
-  character(len=100) :: lampath
-  character(len=100) :: CDFpath
   LOGICAL :: dirExists
   
 !lambda: uses average random mst length & total obj length
@@ -246,7 +246,7 @@ subroutine lambda_setup(ncores,param)
   write(6,*)"       Calculating lambda..."
   
   
-  call find_lambda(ncores,param,lampath)
+  call find_lambda(ncores,param)
 
   write(6,*)"       ...done"
   
@@ -421,9 +421,10 @@ end subroutine lambda_setup
 
 
 
-SUBROUTINE find_lambda(ncores,param,lampath)
+SUBROUTINE find_lambda(ncores,param)
   USE starparams_module
   USE lambdaparams_module
+  use directories_module
 
   IMPLICIT NONE
 
@@ -433,7 +434,6 @@ SUBROUTINE find_lambda(ncores,param,lampath)
   INTEGER, INTENT(in) :: ncores
 ! param = parameter called from main program (mass, temperature,etc)
   DOUBLE PRECISION,intent(in) :: param(1:ncores)
-  character(len=100),intent(in) :: lampath
   INTEGER :: IDs(1:ncores) !ID numbers for heapsort
   
 !-----------

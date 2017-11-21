@@ -3,6 +3,8 @@
 
 program aquila_mst
   use starparams_module
+  use directories_module
+  
   implicit none
 
   character (len=30) :: infile(3)       ! input file name for each cluster type
