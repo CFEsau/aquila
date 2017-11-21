@@ -17,7 +17,7 @@ MODULE starparams_module
   ! peak & average volume densities
   double precision, dimension(:), allocatable :: nvolPeak, nvolCore, nvolObs
   double precision, dimension(:), allocatable :: mBE      ! Bonnor-Ebert mass
-  CHARACTER(len=20) :: outdir  ! Destination directory (e.g. 'outputs')
+  logical :: invert !Invert list after heapsort? (high to low or low to high)
   
 END MODULE starparams_module
 
@@ -81,6 +81,7 @@ END MODULE lambdaparams_module
 
 MODULE directories_module
   
+  CHARACTER(len=20) :: outdir  ! Destination directory (e.g. 'outputs')
   character(len=100) :: paramdir  ! Destination directory (e.g. 'outputs/m')
   character(len=100) :: lampath   ! Directory for lambda data
   character(len=100) :: CDFpath   ! Directory for CDF data

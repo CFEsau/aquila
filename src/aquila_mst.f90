@@ -100,7 +100,8 @@ program aquila_mst
   end do
   
   
-
+  invert = .TRUE. !Invert after heapsort (from high to low)
+  
   paramdir = trim(outdir)//'/mass'
   !create output directory
   INQUIRE(file = trim(paramdir), exist = dirExists)
@@ -205,6 +206,18 @@ program aquila_mst
   END IF
   call shift(ncores,mBE)
   call lambda_setup(ncores,mBE)
+
+
+  invert = .FALSE. !Don't invert after heapsort (keep low to high)
+  paramdir = trim(outdir)//'/invT'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  call shift(ncores,T)
+  call lambda_setup(ncores,T)
+
+  invert = .TRUE.
   
   
   deallocate(RA)

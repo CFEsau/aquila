@@ -501,8 +501,12 @@ SUBROUTINE find_lambda(ncores,param)
   
   DO i = 1,nmst
      j=j+1
-     k = IDs(ncores+1-j) !heapsort orders from small to large - invert
-     !k = IDs(j) !without inverting (e.g. for increasing T)
+     if (invert) then
+        k = IDs(ncores+1-j) !heapsort orders from small to large - invert
+     else
+        k = IDs(j) !without inverting (e.g. for increasing T)
+     end if
+     
      mst_RA(i) = RA(k)  !RA coordinate
      mst_dec(i) = dec(k) !dec coordinate
      
