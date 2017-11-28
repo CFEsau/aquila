@@ -83,7 +83,5 @@ MODULE directories_module
   
   CHARACTER(len=20) :: outdir  ! Destination directory (e.g. 'outputs')
   character(len=100) :: paramdir  ! Destination directory (e.g. 'outputs/m')
-  character(len=100) :: lampath   ! Directory for lambda data
-  character(len=100) :: CDFpath   ! Directory for CDF data
   
 END MODULE directories_module
