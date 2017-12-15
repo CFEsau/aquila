@@ -29,8 +29,8 @@ program readdata
   real :: rcore, robs                 ! Deconvolved & observerd radius
   real :: mcore, merr                 ! Mass of core & uncertainty (Msun)
   real :: Tdust, Terr                 ! Dust temperature & uncertainty
-  real :: ncolPeak, ncolCore, ncolObs ! peak & average column densities
-  real :: nvolPeak, nvolCore, nvolObs ! peak & average volume densities
+  real :: ncolPeak, ncolObs, ncolCore ! peak & average column densities
+  real :: nvolPeak, nvolObs, nvolCore ! peak & average volume densities
   real :: mBE                         ! Bonnor-Ebert mass
   character (len=20) :: coretype      ! prestellar, starless, etc.
   character (len=500) :: wholeline
@@ -48,13 +48,14 @@ program readdata
   write(6,*) ""
   write(6,*) "Input file: ",infile
   write(6,*) ""
-  ignore='CO high-V_LSR'  !ignore any objects that have this comment
+  ignore='CO high-V_LSR' !ignore any objects that have this comment
 
-  !skip header info
+  !skip past header info
   open(1,file=infile,status='old')
   read(1,*)char
   do while (char=='|')
      read(1,*)char
+     !print *, char
   end do
   
   backspace(1)
@@ -71,20 +72,21 @@ program readdata
   
   do
      n_all=n_all+1
-     read (1,'(a)',end=100) wholeline  ! read line from file
+     read (1,'(a)',end=100) wholeline     !read line of data
      
      ! Check whether object has 'ignore' string in & cycle if so
      call hasstring(ignore,wholeline,commentInLine)
      if (commentInLine) then
         nskip=nskip+1
         !write (6,*) "SKIPPING ", corenum
-        cycle ! go to next iteration of 'do'
+        !print *, wholeline
+        cycle ! go to next iteration
      end if
      
      backspace(1)      ! Go back to previous line
      read (1,*) corenum, corename, RAstr, decstr, rcore, robs, &
-          & mcore, merr, Tdust, Terr, ncolPeak, ncolCore, ncolObs, &
-          &  nvolPeak, nvolCore, nvolObs, mBE, coretype
+          & mcore, merr, Tdust, Terr, ncolPeak, ncolObs, ncolCore, &
+          &  nvolPeak, nvolObs, nvolCore, mBE, coretype
 
      ! Find core type for output file direction
      if (coretype=='starless') then
@@ -104,8 +106,8 @@ program readdata
      ! convert from deg:arcmin:arcsec to decimal degrees:
      call degrees(RAstr,decstr,RAdeg,decdeg)
      write(ofile,20) corei, corenum, corename, RAdeg, decdeg, rcore, robs, &
-             & mcore, merr, Tdust, Terr, ncolPeak, ncolCore, ncolObs, &
-             & nvolPeak, nvolCore, nvolObs, mBE, coretype
+             & mcore, merr, Tdust, Terr, ncolPeak, ncolObs, ncolCore, &
+             & nvolPeak, nvolObs, nvolCore, mBE, coretype
   end do
   
   ! Character formatting: ID, ncore, name, RA, dec, rc, ro

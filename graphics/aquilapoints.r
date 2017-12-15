@@ -9,9 +9,9 @@ samples <- c('all','prestellar','starless') #'all': starless, prestellar & proto
 varlist<- c('mass','mBE','T','rcore','ncolCore','nvolCore','invT')
 #var: (corei, corenum, corename, RA, dec,) rcore, robs, mcore, (merr,) T, (Terr,)
 #     ncolPeak, ncolObs, ncolCore, nvolPeak, nvolObs, nvolCore, mBE, (coretype)
-nmst <- c(10, 20, 50) #list of numbers of MST object stars
+nmst <- c(10,20,50) #list of numbers of MST object stars
 
-masterdir <- '~/Documents/Work/aquila/data'
+masterdir <- '../data'
 setwd(masterdir)
 
 starless <- 'starless.dat'
@@ -37,14 +37,13 @@ for (sample in samples){
   for (var in varlist){
     for (n in nmst){
       objfn <- file.path('..',paste0('cores_',sample),var,paste0('n',n,'_objpositions.dat'))
-      objdat <- read.table(objfn,col.names=c("x","y","val"))
+      objdat <- read.table(objfn,col.names=c("x","y","z","val"))
       
       h <- 800
       w <- 16*h / ((ymax-ymin)/(xmax-xmin))
-      png(filename=file.path(plotdir,paste0(var,'_',sample,'_n',n,'.png')),
-          width = w, height = h)
+      #png(filename=file.path(plotdir,paste0(var,'_',sample,'_n',n,'.png')),
+      #    width = w, height = h)
       
-      #plot.new()
       #always plot prestellar cores:
       plot(RApre, decpre, pch=20,col='gray40',#axes = FALSE,#ann = FALSE,
           xlim=c(xmin,xmax), ylim=c(ymin,ymax),
@@ -64,9 +63,23 @@ for (sample in samples){
       #plot object cores:
       points(objdat$x,objdat$y,pch=17,col='red')
       
-      dev.off() #close plotting device
-    }
-  }
-}
+      
+      sampletxt <- if(sample=='starless')'starless & prestellar' else sample
+      pu <- par()$usr #shorthand for par("usr")
+      chw <- par()$cxy[1] #character width
+      chh <- par()$cxy[2] #character height
+      text(pu[1]+chw,pu[3]+chh,paste0(sampletxt,' cores'),adj=c(-0.1,-0.4))
+      #text(xtxt,ytxt,sampletxt,adj=0)
+      
+      legend("topleft",
+             c("starless","prestellar","protostellar","'object' cores"),
+             col=c('gray40','sienna4','black','red'),
+             pch=c(20,3,4,19)
+      )
+      
+      #dev.off() #close plotting device
+    } #end of nmst
+  } # end of varlist
+} # end of samples
 
 setwd(plotdir) #go back to original directory
