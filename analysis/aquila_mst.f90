@@ -6,23 +6,23 @@ program aquila_mst
   use directories_module
   
   implicit none
-
+  
   character (len=30) :: infile(3)       ! input file name for each cluster type
   integer :: corei, corenum             ! counter and number in catalogue
   character (len=15) :: corename        ! core name (15 chars - HGBS_J*)
   character (len=12) :: coretype,sample ! prestellar/starless/protostellar
   integer :: ncores
   logical :: usecores(3)      ! core types to be used in lambda calculations
-  integer :: i,j,p            ! generic counters
-  character(len=20) :: cdum   ! read non-needed strings
+  integer :: i,j              ! generic counters
+  character(len=20) :: cdum   ! read unneeded strings
   integer :: io               ! for iostat specifier (end of file)
   LOGICAL :: dirExists        ! does given directory exist?
-
+  
   infile(1)='../data/starless.dat'
   infile(2)='../data/prestellar.dat'
   infile(3)='../data/protostellar.dat'
-
-  sample="starless" ! Currently all, starless, prestellar, or custom
+  
+  sample="prestellar" ! Currently all, starless, prestellar, or custom
   
   ! create directory for lambda data:
   outdir = '../cores_'//trim(sample)
@@ -31,8 +31,8 @@ program aquila_mst
      CALL system('mkdir -p '//trim(outdir))
   END IF
   
-  !for starless use starless & prestellar. For prestellar just use 'prestellar'
-  !Also set up directory for outputs.
+  !If 'starless', use starless & prestellar.
+  !If 'prestellar', just use prestellar
   if (trim(sample)=='custom') then
      usecores(1)=.FALSE.  ! starless
      usecores(2)=.FALSE.  ! prestellar
@@ -52,11 +52,11 @@ program aquila_mst
   else
      write(6,*) "Core type not recognised."; stop
   end if
-  
+
   
   ncores=0
   do i=1,3
-     if(usecores(i)) then       ! If we want this core, open end of file
+     if(usecores(i)) then  ! If we want this core, open end of file
         open(unit=i,file=trim(infile(i)),status='old',position='append')
         backspace(i) !backspace to beginning of last line in file
         read(i,*) j
@@ -75,11 +75,11 @@ program aquila_mst
   allocate(T(1:ncores))
   allocate(Terr(1:ncores))
   allocate(ncolPeak(1:ncores))
-  allocate(ncolCore(1:ncores))
   allocate(ncolObs(1:ncores))
+  allocate(ncolCore(1:ncores))
   allocate(nvolPeak(1:ncores))
-  allocate(nvolCore(1:ncores))
   allocate(nvolObs(1:ncores))
+  allocate(nvolCore(1:ncores))
   allocate(mBE(1:ncores))
  
   
@@ -90,8 +90,8 @@ program aquila_mst
         do
            read(i,*,iostat=io) corei, corenum, corename, RA(j), dec(j), &
                 & rcore(j), robs(j), m(j), merr(j), T(j), Terr(j), &
-                & ncolPeak(j), ncolCore(j), ncolObs(j), &
-                & nvolPeak(j), nvolCore(j), nvolObs(j), mBE(j), coretype
+                & ncolPeak(j), ncolObs(j), ncolCore(j), &
+                & nvolPeak(j), nvolObs(j), nvolCore(j), mBE(j), coretype
            if (io < 0) goto 100
            j=j+1  ! Successful read: increment j
         end do
@@ -110,9 +110,11 @@ program aquila_mst
   END IF
   !see whether two masses are equal. If so, shift one
   call shift(ncores,m)
-  !and find lambda
+  !and find lambda:
+  write(6,*) "---------------------------"
+  write(6,*) "mass of core"
   call lambda_setup(ncores,m)
-
+  
   
   ! And do for all other paramaters:
   
@@ -123,8 +125,10 @@ program aquila_mst
      CALL system('mkdir -p '//trim(paramdir))
   END IF
   call shift(ncores,rcore)
+  write(6,*) "---------------------------"
+  write(6,*) "Geo. av. between major & minor FWHM of core after deconvolution"
   call lambda_setup(ncores,rcore)
-
+  
   
   paramdir = trim(outdir)//'/robs'
   INQUIRE(file = trim(paramdir), exist = dirExists)
@@ -132,8 +136,10 @@ program aquila_mst
      CALL system('mkdir -p '//trim(paramdir))
   END IF
   call shift(ncores,robs)
+  write(6,*) "---------------------------"
+  write(6,*) "Geo. av. between major & minor FWHM of core before deconvolution"
   call lambda_setup(ncores,robs)
-
+  
  
   paramdir = trim(outdir)//'/T'
   INQUIRE(file = trim(paramdir), exist = dirExists)
@@ -141,8 +147,10 @@ program aquila_mst
      CALL system('mkdir -p '//trim(paramdir))
   END IF
   call shift(ncores,T)
+  write(6,*) "---------------------------"
+  write(6,*) "Dust temperature"
   call lambda_setup(ncores,T)
-
+  
   
   print*,ncores,maxval(ncolPeak)
   paramdir = trim(outdir)//'/ncolPeak'
@@ -151,7 +159,20 @@ program aquila_mst
      CALL system('mkdir -p '//trim(paramdir))
   END IF
   call shift(ncores,ncolPeak)
+  write(6,*) "---------------------------"
+  write(6,*) "Peak H2 column density"
   call lambda_setup(ncores,ncolPeak)
+  
+  
+  paramdir = trim(outdir)//'/ncolObs'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  call shift(ncores,ncolObs)
+  write(6,*) "---------------------------"
+  write(6,*) "Average column density of the core from observed radius"
+  call lambda_setup(ncores,ncolObs)
   
   
   paramdir = trim(outdir)//'/ncolCore'
@@ -160,17 +181,10 @@ program aquila_mst
      CALL system('mkdir -p '//trim(paramdir))
   END IF
   call shift(ncores,ncolCore)
+  write(6,*) "---------------------------"
+  write(6,*) "Average column density of the core from deconvolved radius"
   call lambda_setup(ncores,ncolCore)
-
   
-  paramdir = trim(outdir)//'/ncolObs'
-  INQUIRE(file = trim(paramdir), exist = dirExists)
-  IF (.NOT. dirExists) THEN
-     CALL system('mkdir -p '//trim(paramdir))
-  END IF
-  call shift(ncores,ncolObs)
-  call lambda_setup(ncores,ncolObs)
-
   
   paramdir = trim(outdir)//'/nvolPeak'
   INQUIRE(file = trim(paramdir), exist = dirExists)
@@ -178,17 +192,10 @@ program aquila_mst
      CALL system('mkdir -p '//trim(paramdir))
   END IF
   call shift(ncores,nvolPeak)
+  write(6,*) "---------------------------"
+  write(6,*) "Peak volume density derived from peak column density"
   call lambda_setup(ncores,nvolPeak)
-
   
-  paramdir = trim(outdir)//'/nvolCore'
-  INQUIRE(file = trim(paramdir), exist = dirExists)
-  IF (.NOT. dirExists) THEN
-     CALL system('mkdir -p '//trim(paramdir))
-  END IF
-  call shift(ncores,nvolCore)
-  call lambda_setup(ncores,nvolCore)
-
   
   paramdir = trim(outdir)//'/nvolObs'
   INQUIRE(file = trim(paramdir), exist = dirExists)
@@ -196,8 +203,21 @@ program aquila_mst
      CALL system('mkdir -p '//trim(paramdir))
   END IF
   call shift(ncores,nvolObs)
+  write(6,*) "---------------------------"
+  write(6,*) "Average volume density derived using observed radius"
   call lambda_setup(ncores,nvolObs)
-
+  
+  
+  paramdir = trim(outdir)//'/nvolCore'
+  INQUIRE(file = trim(paramdir), exist = dirExists)
+  IF (.NOT. dirExists) THEN
+     CALL system('mkdir -p '//trim(paramdir))
+  END IF
+  call shift(ncores,nvolCore)
+  write(6,*) "---------------------------"
+  write(6,*) "Average volume density derived using deconvolved radius"
+  call lambda_setup(ncores,nvolCore)
+  
   
   paramdir = trim(outdir)//'/mBE'
   INQUIRE(file = trim(paramdir), exist = dirExists)
@@ -205,9 +225,11 @@ program aquila_mst
      CALL system('mkdir -p '//trim(paramdir))
   END IF
   call shift(ncores,mBE)
+  write(6,*) "---------------------------"
+  write(6,*) "Bonnor-Ebert mass ratio of core"
   call lambda_setup(ncores,mBE)
-
-
+  
+  
   invert = .FALSE. !Don't invert after heapsort (keep low to high)
   paramdir = trim(outdir)//'/invT'
   INQUIRE(file = trim(paramdir), exist = dirExists)
@@ -216,7 +238,7 @@ program aquila_mst
   END IF
   call shift(ncores,T)
   call lambda_setup(ncores,T)
-
+  
   invert = .TRUE.
   
   
@@ -229,8 +251,10 @@ program aquila_mst
   deallocate(T)
   deallocate(Terr)
   deallocate(ncolPeak)
+  deallocate(ncolObs)
   deallocate(ncolCore)
   deallocate(nvolPeak)
+  deallocate(nvolObs)
   deallocate(nvolCore)
   deallocate(mBE)
 

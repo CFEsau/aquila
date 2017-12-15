@@ -12,10 +12,10 @@ MODULE starparams_module
   double precision, dimension(:), allocatable :: rcore, robs
   ! mass, m uncertainty, dust temprature, t uncertainty
   double precision, dimension(:), allocatable :: m, merr, T, Terr
-  ! peak & average column densities
-  double precision, dimension(:), allocatable :: ncolPeak, ncolCore, ncolObs
-  ! peak & average volume densities
-  double precision, dimension(:), allocatable :: nvolPeak, nvolCore, nvolObs
+  ! peak & average column densities from observed & deconvolved radii
+  double precision, dimension(:), allocatable :: ncolPeak, ncolObs, ncolCore
+  ! peak & average volume densities from observed & deconvolved radii
+  double precision, dimension(:), allocatable :: nvolPeak, nvolObs, nvolCore
   double precision, dimension(:), allocatable :: mBE      ! Bonnor-Ebert mass
   logical :: invert !Invert list after heapsort? (high to low or low to high)
   
